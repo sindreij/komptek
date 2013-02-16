@@ -42,9 +42,15 @@ LETTER [a-zA-Z_]
 "=="                            { RETURN(EQUAL); }
 "!="                            { RETURN(NEQUAL); }
 
-{DIGIT}+                        { yylval = atoi(yytext); RETURN(NUMBER); }
+{DIGIT}+                        { 
+        int32_t* val = malloc(sizeof(int32_t));
+        *val = atoi(yytext);
+        yylval = val;
+        RETURN(NUMBER); 
+    }
+
 "\""({CHAR}|"\\\"")*"\""        { RETURN(STRING); }
-{LETTER}({LETTER}|{DIGIT})*     { RETURN(IDENTIFIER); }
+{LETTER}({LETTER}|{DIGIT})*     { yylval = yytext; RETURN(IDENTIFIER); }
 
 "//"[^\n]*\n                    {}
 {WHITESPACE}                    {}

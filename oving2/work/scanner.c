@@ -911,41 +911,46 @@ YY_RULE_SETUP
 case 20:
 YY_RULE_SETUP
 #line 45 "src/scanner.l"
-{ yylval = atoi(yytext); RETURN(NUMBER); }
+{ 
+        int32_t* val = malloc(sizeof(int32_t));
+        *val = atoi(yytext);
+        yylval = val;
+        RETURN(NUMBER); 
+    }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 46 "src/scanner.l"
+#line 52 "src/scanner.l"
 { RETURN(STRING); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 47 "src/scanner.l"
-{ RETURN(IDENTIFIER); }
+#line 53 "src/scanner.l"
+{ yylval = yytext; RETURN(IDENTIFIER); }
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 49 "src/scanner.l"
+#line 55 "src/scanner.l"
 {}
 	YY_BREAK
 case 24:
 /* rule 24 can match eol */
 YY_RULE_SETUP
-#line 50 "src/scanner.l"
+#line 56 "src/scanner.l"
 {}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 52 "src/scanner.l"
+#line 58 "src/scanner.l"
 { RETURN(yytext[0]); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 53 "src/scanner.l"
+#line 59 "src/scanner.l"
 ECHO;
 	YY_BREAK
-#line 949 "<stdout>"
+#line 954 "<stdout>"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1951,7 +1956,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 53 "src/scanner.l"
+#line 59 "src/scanner.l"
 
 
 

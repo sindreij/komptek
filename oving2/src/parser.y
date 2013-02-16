@@ -100,11 +100,11 @@ FunctionList: Function { $$ = CN1N(function_list_n, $1); }
 StatementList: Statement { $$ = CN1N(statement_list_n, $1); }
         | StatementList Statement { $$ = CN2N(statement_list_n, $1, $2); };
 PrintList: PrintItem { $$ = CN1N(print_list_n, $1); }
-        | PrintList ',' PrintItem { $$ = CN2N(print_list_n, $1, $2); };
+        | PrintList ',' PrintItem { $$ = CN2N(print_list_n, $1, $3); };
 ExpressionList: Expression { $$ = CN1N(expression_list_n, $1); }
-        | ExpressionList ',' Expression { $$ = CN2N(expression_list_n, $1, $2); };
+        | ExpressionList ',' Expression { $$ = CN2N(expression_list_n, $1, $3); };
 VariableList: Variable { $$ = CN1N(variable_list_n, $1); }
-        | VariableList ',' Variable { $$ = CN2N(variable_list_n, $1, $2); };
+        | VariableList ',' Variable { $$ = CN2N(variable_list_n, $1, $3); };
 DeclarationList: DeclarationList Declaration { $$ = CN2N(declaration_list_n, $1, $2); }
         | /* empty */ { $$ = NULL };
 ArgumentList: ExpressionList { $$ = CN1N(argument_list_n, $1); }
@@ -135,28 +135,28 @@ ForStatement: FOR AssignmentStatement TO Expression DO Statement DONE
             { $$ = CN3N(for_statement_n, $2, $4, $6); };
 NullStatement: CONTINUE  { $$ = CN0N(null_statement_n); };
 
-Expression: Expression '+' Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression '-' Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression '*' Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression '/' Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression '<' Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression '>' Expression { $$ = CN2N(expression_n, $1, $3); }
-        | '-' Expression  { $$ = CN1N(expression_n, $1); }
-        | Expression EQUAL Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression NEQUAL Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression LEQUAL Expression { $$ = CN2N(expression_n, $1, $3); }
-        | Expression GEQUAL Expression { $$ = CN2N(expression_n, $1, $3); }
-        | '(' Expression ')' { $$ = CN1N(expression_n, $1); }
+Expression: Expression '+' Expression { $$ = CN2D(expression_n, STRDUP("+"), $1, $3); }
+        | Expression '-' Expression { $$ = CN2D(expression_n, STRDUP("-"), $1, $3); }
+        | Expression '*' Expression { $$ = CN2D(expression_n, STRDUP("*"), $1, $3); }
+        | Expression '/' Expression { $$ = CN2D(expression_n, STRDUP("/"), $1, $3); }
+        | Expression '<' Expression { $$ = CN2D(expression_n, STRDUP("<"), $1, $3); }
+        | Expression '>' Expression { $$ = CN2D(expression_n, STRDUP(">"), $1, $3); }
+        | '-' Expression  { $$ = CN1D(expression_n, STRDUP("-"), $2); }
+        | Expression EQUAL Expression { $$ = CN2D(expression_n, STRDUP("=="), $1, $3); }
+        | Expression NEQUAL Expression { $$ = CN2D(expression_n, STRDUP("!="), $1, $3); }
+        | Expression LEQUAL Expression { $$ = CN2D(expression_n, STRDUP("<="), $1, $3); }
+        | Expression GEQUAL Expression { $$ = CN2D(expression_n, STRDUP(">="), $1, $3); }
+        | '(' Expression ')' { $$ = CN1N(expression_n, $2); }
         | Integer { $$ = CN1N(expression_n, $1); }
         | Variable { $$ = CN1N(expression_n, $1); }
-        | Variable '(' ArgumentList ')' { $$ = CN2N(expression_n, $1, $2); };
+        | Variable '(' ArgumentList ')' { $$ = CN2D(expression_n, STRDUP("F"), $1, $3); };
 
 Declaration: VAR VariableList { $$ = CN1N(declaration_n, $2); };
-Variable: IDENTIFIER { $$ = CN0D(variable_n, $1); };
+Variable: IDENTIFIER { $$ = CN0D(variable_n, STRDUP($1)); };
 Integer: NUMBER { $$ = CN0D(integer_n, $1); };
 PrintItem: Expression { $$ = CN1N(print_item_n, $1); }
         | Text { $$ = CN1N(print_item_n, $1); };
-Text: STRING { $$ = CN0D(text_n, $1); };
+Text: STRING { $$ = CN0D(text_n, STRDUP($1)); };
 
 
 %% 

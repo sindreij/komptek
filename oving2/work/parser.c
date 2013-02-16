@@ -1545,7 +1545,7 @@ yyreduce:
   case 8:
 /* Line 1792 of yacc.c  */
 #line 103 "src/parser.y"
-    { (yyval) = CN2N(print_list_n, (yyvsp[(1) - (3)]), (yyvsp[(2) - (3)])); }
+    { (yyval) = CN2N(print_list_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 9:
@@ -1557,7 +1557,7 @@ yyreduce:
   case 10:
 /* Line 1792 of yacc.c  */
 #line 105 "src/parser.y"
-    { (yyval) = CN2N(expression_list_n, (yyvsp[(1) - (3)]), (yyvsp[(2) - (3)])); }
+    { (yyval) = CN2N(expression_list_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 11:
@@ -1569,7 +1569,7 @@ yyreduce:
   case 12:
 /* Line 1792 of yacc.c  */
 #line 107 "src/parser.y"
-    { (yyval) = CN2N(variable_list_n, (yyvsp[(1) - (3)]), (yyvsp[(2) - (3)])); }
+    { (yyval) = CN2N(variable_list_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 13:
@@ -1719,73 +1719,73 @@ yyreduce:
   case 37:
 /* Line 1792 of yacc.c  */
 #line 138 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("+"), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 38:
 /* Line 1792 of yacc.c  */
 #line 139 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("-"), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 39:
 /* Line 1792 of yacc.c  */
 #line 140 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("*"), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 40:
 /* Line 1792 of yacc.c  */
 #line 141 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("/"), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 41:
 /* Line 1792 of yacc.c  */
 #line 142 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("<"), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 42:
 /* Line 1792 of yacc.c  */
 #line 143 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP(">"), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 43:
 /* Line 1792 of yacc.c  */
 #line 144 "src/parser.y"
-    { (yyval) = CN1N(expression_n, (yyvsp[(1) - (2)])); }
+    { (yyval) = CN1D(expression_n, STRDUP("-"), (yyvsp[(2) - (2)])); }
     break;
 
   case 44:
 /* Line 1792 of yacc.c  */
 #line 145 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("=="), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 45:
 /* Line 1792 of yacc.c  */
 #line 146 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("!="), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 46:
 /* Line 1792 of yacc.c  */
 #line 147 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("<="), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 47:
 /* Line 1792 of yacc.c  */
 #line 148 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
+    { (yyval) = CN2D(expression_n, STRDUP(">="), (yyvsp[(1) - (3)]), (yyvsp[(3) - (3)])); }
     break;
 
   case 48:
 /* Line 1792 of yacc.c  */
 #line 149 "src/parser.y"
-    { (yyval) = CN1N(expression_n, (yyvsp[(1) - (3)])); }
+    { (yyval) = CN1N(expression_n, (yyvsp[(2) - (3)])); }
     break;
 
   case 49:
@@ -1803,7 +1803,7 @@ yyreduce:
   case 51:
 /* Line 1792 of yacc.c  */
 #line 152 "src/parser.y"
-    { (yyval) = CN2N(expression_n, (yyvsp[(1) - (4)]), (yyvsp[(2) - (4)])); }
+    { (yyval) = CN2D(expression_n, STRDUP("F"), (yyvsp[(1) - (4)]), (yyvsp[(3) - (4)])); }
     break;
 
   case 52:
@@ -1815,7 +1815,7 @@ yyreduce:
   case 53:
 /* Line 1792 of yacc.c  */
 #line 155 "src/parser.y"
-    { (yyval) = CN0D(variable_n, (yyvsp[(1) - (1)])); }
+    { (yyval) = CN0D(variable_n, STRDUP((yyvsp[(1) - (1)]))); }
     break;
 
   case 54:
@@ -1839,7 +1839,7 @@ yyreduce:
   case 57:
 /* Line 1792 of yacc.c  */
 #line 159 "src/parser.y"
-    { (yyval) = CN0D(text_n, (yyvsp[(1) - (1)])); }
+    { (yyval) = CN0D(text_n, STRDUP((yyvsp[(1) - (1)]))); }
     break;
 
 
