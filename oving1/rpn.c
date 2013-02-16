@@ -18,7 +18,7 @@ void push(RpnCalc* rpn, double n){
     //Push the double n on the stack
 
     //First we check if the stack need to grow
-    if (rpn->top == rpn->size) {
+    if (rpn->top == rpn->size) { 
         //We need to get more memory
         //We add two elements on the stack. It is many more algorithms we can use here,
         //but this is simple and works.
@@ -68,6 +68,7 @@ void performOp(RpnCalc* rpn, char op){
             result = op2 / op1;
             break;
         default:
+            result = 0;
             printf("Kjenner ikke igjen %c", op);
             break;
     }

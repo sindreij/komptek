@@ -1,5 +1,7 @@
 CFLAGS+= -std=c99 -Wall
 
+CC= clang
+
 objects = rpn.o main.o
 
 all : rpn
@@ -18,7 +20,7 @@ test : all
 	./rpn < 1000.txt
 
 rpn : $(objects)
-	gcc $(objects) -o rpn
+	clang $(objects) -o rpn
 	
 .PHONY : clean purge
 
