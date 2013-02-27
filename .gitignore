@@ -35,3 +35,7 @@ nosetests.xml
 .pydevproject
 
 *.o
+
+obj
+rdn
+a.out
