@@ -1,4 +1,0 @@
-.data
-.INTEGER: .string "%d "
-.STRING0: .string "Skip..."
-.globl main

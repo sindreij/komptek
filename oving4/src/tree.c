@@ -52,7 +52,6 @@ node_t * node_init ( node_t *nd, nodetype_t type, void *data, uint32_t n_childre
 
 void node_finalize ( node_t *discard ) {
     free(discard->data);
-    //free(discard->entry);
     free(discard->children);
     free(discard);
 }
@@ -99,6 +98,7 @@ void collect_functions(node_t *node) {
         symbol->stack_offset = 0;
         symbol->label = STRDUP(node->children[0]->data);
         symbol_insert(symbol->label, symbol);
+        node->entry = symbol;
     } else {
         for (uint32_t i=0; i < node->n_children; i++) {
             collect_functions(node->children[i]);
@@ -106,29 +106,98 @@ void collect_functions(node_t *node) {
     }
 }
 
+symbol_t* current_function;
+int32_t local_offset;
+
 void collect_names(node_t *node) {
     if (node == NULL) {
         return;
     }
-    /*if (node->type.index == FUNCTION) {
-        scope_add();
-        node_t* variable_list = node->children[1];
-        for (uint32_t i=0; i<variable_list->n_children; i++) {
-            symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
-            //TODO
-            symbol->stack_offset = 0;
-            symbol->label = NULL;
-
+    switch ( node->type.index ) {
+        case FUNCTION:{
+            scope_add();
+            node_t* variable_list = node->children[1];
+            if (variable_list != NULL) {
+                uint32_t offset = variable_list->n_children*4 + 4;
+                for (uint32_t i=0; i<variable_list->n_children; i++) {
+                    node_t* child = variable_list->children[i];
+                    symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
+                    symbol->stack_offset = offset;
+                    offset -= 4;
+                    symbol->label = NULL;
+                    symbol_insert(child->data, symbol);
+                    child->entry = symbol;
+                }
+            }
+            current_function = node->entry;
+            local_offset = -4;
+            //Continue with the block;
+            collect_names(node->children[2]);
+            current_function = NULL;
+            scope_remove();
+            break;
         }
-    }*/
+        case BLOCK:{
+            scope_add();
+            int32_t old_offset = local_offset;
+            local_offset = -4;
+            for (uint32_t i=0; i < node->n_children; i++) {
+                node_t* child = node->children[i];
+                if (child != NULL) {
+                    collect_names(child);
+                }
+            }
+            scope_remove();
+            local_offset = old_offset;
+            break;
+            break;
+        }
+        case DECLARATION:{
+            node_t* variable_list = node->children[0];
+            if (variable_list != NULL) {
+                for (uint32_t i=0; i<variable_list->n_children; i++) {
+                    node_t* child = variable_list->children[i];
+                    symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
+                    symbol->stack_offset = local_offset;
+                    local_offset -= 4;
+                    symbol->label = NULL;
+                    symbol_insert(child->data, symbol);
+                    child->entry = symbol;
+                }
+            }
+            break;
+        }
+        /*Vi kan vite sikkert at en VARIABLE ikke vil dukke opp som er under
+        en DECLARATION siden rekursjonen stopper på DECLARATION. Derfor er dette
+        lov*/
+        case VARIABLE:{
+            symbol_t* symbol = symbol_get(node->data);
+            if (symbol == NULL) {
+                if (current_function != NULL) {
+                    printf("In function %s:\n", current_function->label);
+                }
+                printf("error: '%s' undeclared\n", node->data);
+                exit(0);
+            }
+            node->entry = symbol;
+        }
+        default:{
+            for (uint32_t i=0; i < node->n_children; i++) {
+                node_t* child = node->children[i];
+                if (child != NULL) {
+                    collect_names(child);
+                }
+            }
+        } 
+    }
 }
 
 void bind_names ( node_t *root ){
     collect_strings(root);
+
     //root-scope
     scope_add();
     collect_functions(root);
-
     collect_names(root);
 }
 

@@ -1,4 +1,5 @@
 FUNC my_function ()
 {
+    test := 5
     PRINT "Skip..."
 }

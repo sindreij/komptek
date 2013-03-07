@@ -91,8 +91,8 @@ void scope_remove ( void ) {
 
 
 void symbol_insert ( char *key, symbol_t *value ) {
-    //TODO Depth
     hash_t* scope = scopes[scopes_index];
+    value->depth = scopes_index;
     ght_insert(scope, (void*) value, strlen(key), key);
 
     values_index++;
@@ -112,8 +112,10 @@ void symbol_insert ( char *key, symbol_t *value ) {
 symbol_t * symbol_get ( char *key ) {
     symbol_t* result = NULL;
 
-    hash_t* scope = scopes[scopes_index];
-    result = (symbol_t*) ght_get(scope, strlen(key), key);
+    for (int i = scopes_index; i>=0 && result==NULL; i--) {
+        hash_t* scope = scopes[i];
+        result = (symbol_t*) ght_get(scope, strlen(key), key);
+    }
 
 
     // Keep this for debugging/testing
@@ -121,4 +123,6 @@ symbol_t * symbol_get ( char *key ) {
         if ( result != NULL )
             fprintf ( stderr, "Retrieving (%s,%d)\n", key, result->stack_offset );
     #endif
+
+    return result;
 }
