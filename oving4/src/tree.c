@@ -1,5 +1,6 @@
 #include "tree.h"
 #include "vslc.h"
+#include "symtab.h"
 
 
 #ifdef DUMP_TREES
@@ -11,7 +12,7 @@ node_print ( FILE *output, node_t *root, uint32_t nesting )
         fprintf ( output, "%*c%s", nesting, ' ', root->type.text );
         if ( root->type.index == INTEGER )
             fprintf ( output, "(%d)", *((int32_t *)root->data) );
-        if ( root->type.index == VARIABLE || root->type.index == EXPRESSION )
+        if ( root->type.index == VARIABLE || root->type.index == EXPRESSION || root->type.index == TEXT)
         {
             if ( root->data != NULL )
                 fprintf ( output, "(\"%s\")", (char *)root->data );
@@ -51,7 +52,7 @@ node_t * node_init ( node_t *nd, nodetype_t type, void *data, uint32_t n_childre
 
 void node_finalize ( node_t *discard ) {
     free(discard->data);
-    free(discard->entry);
+    //free(discard->entry);
     free(discard->children);
     free(discard);
 }
@@ -70,6 +71,67 @@ void destroy_subtree ( node_t *discard ){
     }
     node_finalize(discard);
 }
+
+void collect_strings(node_t *node) {
+    if (node == NULL) {
+        return;
+    }
+
+    if (node->type.index == TEXT) {
+        char* text = node->data;
+        int32_t* index = malloc(sizeof(int32_t));
+        *index = strings_add(text);
+        node->data = index;
+    }
+
+    for (uint32_t i=0; i < node->n_children; i++) {
+        collect_strings(node->children[i]);
+    }
+}
+
+void collect_functions(node_t *node) {
+    if (node == NULL) {
+        return;
+    }
+
+    if (node->type.index == FUNCTION) {
+        symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
+        symbol->stack_offset = 0;
+        symbol->label = STRDUP(node->children[0]->data);
+        symbol_insert(symbol->label, symbol);
+    } else {
+        for (uint32_t i=0; i < node->n_children; i++) {
+            collect_functions(node->children[i]);
+        }
+    }
+}
+
+void collect_names(node_t *node) {
+    if (node == NULL) {
+        return;
+    }
+    /*if (node->type.index == FUNCTION) {
+        scope_add();
+        node_t* variable_list = node->children[1];
+        for (uint32_t i=0; i<variable_list->n_children; i++) {
+            symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
+            //TODO
+            symbol->stack_offset = 0;
+            symbol->label = NULL;
+
+        }
+    }*/
+}
+
+void bind_names ( node_t *root ){
+    collect_strings(root);
+    //root-scope
+    scope_add();
+    collect_functions(root);
+
+    collect_names(root);
+}
+
 
 node_t* simplify_tree ( node_t* node ){
     if ( node != NULL ){

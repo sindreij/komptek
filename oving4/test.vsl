@@ -1,0 +1,4 @@
+FUNC my_function ()
+{
+    PRINT "Skip..."
+}
