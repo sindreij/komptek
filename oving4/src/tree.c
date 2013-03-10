@@ -52,6 +52,8 @@ node_t * node_init ( node_t *nd, nodetype_t type, void *data, uint32_t n_childre
 
 void node_finalize ( node_t *discard ) {
     free(discard->data);
+    //We do not free discard->entry since that does belong to the
+    //symbol table, and it is the symbol table that frees those.
     free(discard->children);
     free(discard);
 }
@@ -71,33 +73,49 @@ void destroy_subtree ( node_t *discard ){
     node_finalize(discard);
 }
 
+//Henter alle stringene og kaller strings_add på de
 void collect_strings(node_t *node) {
     if (node == NULL) {
         return;
     }
 
+    //Vi har funnet en teks-node
     if (node->type.index == TEXT) {
+        //Vi plukker ut teksten fra den
         char* text = node->data;
         int32_t* index = malloc(sizeof(int32_t));
+        //Så legger vi til den i listen over strenger
+        //og får en index tilbake
         *index = strings_add(text);
+        //Nå trenger ikke tekstnoden å holde på strengen
+        //lengre, den holder heller en index for hvor
+        //strengen er
         node->data = index;
-    }
-
-    for (uint32_t i=0; i < node->n_children; i++) {
-        collect_strings(node->children[i]);
+    } else {
+        //Er det ikke en tekst node vi har funnet så fortsetter vi å 
+        //dukke nedover for å finne en.
+        for (uint32_t i=0; i < node->n_children; i++) {
+            collect_strings(node->children[i]);
+        }
     }
 }
 
+//Denne finner alle funskonene i treet vårt
 void collect_functions(node_t *node) {
     if (node == NULL) {
         return;
     }
 
+    //Har vi funnet en funksjon så trenger vi ikke å dukke dypere
     if (node->type.index == FUNCTION) {
+        //Vi lager et nytt symbol, setter variablene riktig
         symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
         symbol->stack_offset = 0;
         symbol->label = STRDUP(node->children[0]->data);
+        //Så lagrer vi symbolet vårt
         symbol_insert(symbol->label, symbol);
+        //Og til slutt lager vi en kobling mellom funksjonen
+        //og symbolet så vi kan finne tilbake
         node->entry = symbol;
     } else {
         for (uint32_t i=0; i < node->n_children; i++) {
@@ -106,53 +124,100 @@ void collect_functions(node_t *node) {
     }
 }
 
+//For å holde rede på hvilken funksjon vi er i. Brukes bare
+//for fine feilmeldinger hvis vi finner en feil.
 symbol_t* current_function;
+//For å holde rede på hva offset for neste lokale variabel er
 int32_t local_offset;
 
 void collect_names(node_t *node) {
     if (node == NULL) {
         return;
     }
+    //For hver node må vi finne ut hva det er.
+    //Merk at bare enkelte av disse har et rekursivt kall.
     switch ( node->type.index ) {
         case FUNCTION:{
+            //Er det en funksjon vi har funnet, så må vi lage et nytt scope
             scope_add();
+            //Så må vi finne alle parameterne til funksjonen. Vi starter
+            //med å finne noden som er VARIABLE_LIST. Denne skal ligge som
+            //barn nummer 2 (dvs 1 0-indexert).
             node_t* variable_list = node->children[1];
+            //En VARIABLE_LIST kan være NULL hvis funksjonen ikke har parametre
             if (variable_list != NULL) {
+                //Siste parameter skal ha offset 8. Det skal være 4 i forskjell
+                //mellom hvert offset og det synker. Vi må regne ut hva offsettet
+                //skal være til den første.
                 uint32_t offset = variable_list->n_children*4 + 4;
+                //Så løper vi igjennom alle barna til PARAMETER_LIST. Dette skal være
+                //noder av type VARIABLE.
                 for (uint32_t i=0; i<variable_list->n_children; i++) {
                     node_t* child = variable_list->children[i];
+                    //Vi lager et nytt symbol
                     symbol_t* symbol = (symbol_t*) malloc(sizeof(symbol_t));
+                    //Setter offset riktig
                     symbol->stack_offset = offset;
+                    //Neste offset blir da 4 mindre
                     offset -= 4;
+                    //Variabler trenger ikke label
                     symbol->label = NULL;
                     symbol_insert(child->data, symbol);
+                    //Vi setter entry så vi vet hva som er symbolet for denne
+                    //variabelen.
                     child->entry = symbol;
                 }
             }
+            //Så setter vi current_function for debugging-formål. Dette
+            //gjør at vi vet hvor vi er.
             current_function = node->entry;
+            //Resetter local_offset for nytt scope. (Siden det ikke finnes noe
+            //variabel-scope over en funksjon trenger vi ikke ta vare på gammel verdi)
             local_offset = -4;
-            //Continue with the block;
+            //Så kaller vi oss selv rekursivt BLOCK-noden som skal være barn nummer
+            //tre. Merk at dette lager enda et nytt scope. Det scopet vi nettopp har
+            //laget vil dermed bare ha parameterne.
+            //(Dette gjelder ikke hvis det ikke er en BLOCK under funksjonen, men
+            //da har funskjonen bare et STATEMENT)
             collect_names(node->children[2]);
+            //Og der var hele funksjonen gjort. Vi kan nå resette current_function
+            //og fjerne scopet.
             current_function = NULL;
             scope_remove();
             break;
         }
         case BLOCK:{
+            //En BLOCK ligner veldig på en funksjon, men er litt enklere på noen måter
+            //vi starter med å legge til et scope.
             scope_add();
+            //Vi må ta vare på det gamle offsettet (Eller kanskje egentlig ikke siden en BLOCK
+            //må ha DECLARATION_LIST på starten, men det er nå litt ryddig, siden offsettet
+            //fra denne blokken ikke vil havne i blokken over.)
             int32_t old_offset = local_offset;
+            //Så kan vi resette local_offset
             local_offset = -4;
+            //Så går vi igjennom alle nodene under og rekursivt kaller de
+            //(Jeg ser i ettertid at jeg med dette og lagringen av old_offset gjør
+            //at man ikke trenger å ha DECKLARATION_LIST på starten av en BLOCK, 
+            //men det må man ifølge språkets grammar. Kall det fremadtenkning)
             for (uint32_t i=0; i < node->n_children; i++) {
                 node_t* child = node->children[i];
                 if (child != NULL) {
                     collect_names(child);
                 }
             }
+            //Vi er ferdig med å konsumere barna til blokken. På tide å fjerne
+            //scopet og sette tilbake local_offset.
             scope_remove();
             local_offset = old_offset;
             break;
-            break;
         }
         case DECLARATION:{
+            //En DECLARATION betyr at vi har en eller flere variabel å deklarere. Denne ligner
+            //ganske mye på parameter-delen av en funksjon. Den eneste forskjellen er
+            //at offset settes litt anderledes. Hvis man skulle refaktorere dette
+            //så burde kanskje denne biten være en egen funksjon.
+            //Merk forresten at denne ikke rekurserer videre.
             node_t* variable_list = node->children[0];
             if (variable_list != NULL) {
                 for (uint32_t i=0; i<variable_list->n_children; i++) {
@@ -167,21 +232,34 @@ void collect_names(node_t *node) {
             }
             break;
         }
-        /*Vi kan vite sikkert at en VARIABLE ikke vil dukke opp som er under
-        en DECLARATION siden rekursjonen stopper på DECLARATION. Derfor er dette
-        lov*/
+        //Vi kan vite sikkert at en VARIABLE ikke vil dukke opp som er under
+        //en DECLARATION siden rekursjonen stopper på DECLARATION. Derfor er dette
+        //greit.
         case VARIABLE:{
+            //Dette skjer altså for nodene som er VARIABLE som ikke er en del av 
+            //en deklarasjon eller en funksjonsdeklarasjon. Altså en VARIABLE
+            //som er en del av en EXPRESSION.
+
+            //Vi starter med å finne ut hvilket symbol som hører til variablene
             symbol_t* symbol = symbol_get(node->data);
+            //Hvis vi ikke fant noe symbol så printer vi en error-melding og stopper
+            //kjøringen av hele programmet (Litt dristig kanskje, men det er fornuftig
+            //nå, i fremtiden når denne kompilatoren blir ferdig burde man kanskje
+            //inkrementere en error_number og så si ifra når man har kjørt igjennom
+            //slik at man kan plukke opp flere feil).
             if (symbol == NULL) {
+                //Her kommer current_function til sitt bruk.
                 if (current_function != NULL) {
                     printf("In function %s:\n", current_function->label);
                 }
                 printf("error: '%s' undeclared\n", node->data);
                 exit(0);
             }
+            //Setter entry så vi vet hvor variabelen er.
             node->entry = symbol;
         }
         default:{
+            //Er dette en annen nodetype så kaller vi alle barn rekursivt.
             for (uint32_t i=0; i < node->n_children; i++) {
                 node_t* child = node->children[i];
                 if (child != NULL) {
@@ -193,12 +271,19 @@ void collect_names(node_t *node) {
 }
 
 void bind_names ( node_t *root ){
+    //Vi henter først alle strenger for å bli ferdig med det.
     collect_strings(root);
 
-    //root-scope
+
+    //Vi lager et root-scope. Her vil alle funksjonene havne
     scope_add();
+    //Så går vi igjennom og henter funksjonene. Vi gjør dette først så en funksjon kan
+    //kalles uansett om den er deklarert før eller etter den brukes
     collect_functions(root);
+    //Så tilslutt henter vi opp alle variabler og funksjonskall
     collect_names(root);
+    //Vi er ferdig og kan slette root-scopet.
+    scope_remove();
 }
 
 
