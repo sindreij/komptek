@@ -1,0 +1,9 @@
+2,6c2,3
+< Parameter s is5 
+< Parameter t is10 
+< The sum of their squares is125 
+< The returned result is125 
+< The other returned result is42 
+---
+> The returned result is5 
+> The other returned result is-3787816 

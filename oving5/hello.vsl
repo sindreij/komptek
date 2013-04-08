@@ -1,0 +1,24 @@
+FUNC hello ()
+{
+    VAR x, y, z
+    x := 170
+    y := 10
+    {
+        VAR x
+        x := 150
+        PRINT "Hello, world!", x/y
+    }
+    PRINT "Hello, world!", x/y
+    x := 1
+    y := 2
+    z := 3
+    PRINT "Svaret er: ", (x+y)*z
+    x := myfunc(12)
+    RETURN 0
+}
+
+FUNC myfunc()
+{
+    PRINT "Hello from myfunc"
+    RETURN 0
+}
