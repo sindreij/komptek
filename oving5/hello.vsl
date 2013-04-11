@@ -13,12 +13,12 @@ FUNC hello ()
     y := 2
     z := 3
     PRINT "Svaret er: ", (x+y)*z
-    x := myfunc(12)
+    x := myfunc(42, 89)
     RETURN 0
 }
 
-FUNC myfunc()
+FUNC myfunc(a, b)
 {
-    PRINT "Hello from myfunc"
+    PRINT "Hello from myfunc", a, b
     RETURN 0
 }

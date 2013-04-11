@@ -253,12 +253,63 @@ void generate ( FILE *stream, node_t *root ) {
                 } else if (strcmp(root->data, "/") == 0) {
                     instruction_add(STRING, STRDUP("\tcdq"), NULL, 0, 0);
                     instruction_add(DIV, STRDUP("%ebx"), NULL, 0, 0);
-
+                } else if (strcmp(root->data, "<") == 0) {
+                    instruction_add(CMP, STRDUP("%eax"), STRDUP("%ebx"), 0, 0);
+                    instruction_add(SETG, STRDUP("%al"), NULL, 0, 0);
+                    instruction_add(CBW, NULL, NULL, 0, 0);
+                    instruction_add(CWDE, NULL, NULL, 0, 0);
+                } else if (strcmp(root->data, ">") == 0) {
+                    instruction_add(CMP, STRDUP("%eax"), STRDUP("%ebx"), 0, 0);
+                    instruction_add(SETL, STRDUP("%al"), NULL, 0, 0);
+                    instruction_add(CBW, NULL, NULL, 0, 0);
+                    instruction_add(CWDE, NULL, NULL, 0, 0);
+                } else if (strcmp(root->data, "==") == 0) {
+                    instruction_add(CMP, STRDUP("%eax"), STRDUP("%ebx"), 0, 0);
+                    instruction_add(SETE, STRDUP("%al"), NULL, 0, 0);
+                    instruction_add(CBW, NULL, NULL, 0, 0);
+                    instruction_add(CWDE, NULL, NULL, 0, 0);
+                } else if (strcmp(root->data, "!=") == 0) {
+                    instruction_add(CMP, STRDUP("%eax"), STRDUP("%ebx"), 0, 0);
+                    instruction_add(SETNE, STRDUP("%al"), NULL, 0, 0);
+                    instruction_add(CBW, NULL, NULL, 0, 0);
+                    instruction_add(CWDE, NULL, NULL, 0, 0);
+                } else if (strcmp(root->data, "<=") == 0) {
+                    instruction_add(CMP, STRDUP("%eax"), STRDUP("%ebx"), 0, 0);
+                    instruction_add(SETGE, STRDUP("%al"), NULL, 0, 0);
+                    instruction_add(CBW, NULL, NULL, 0, 0);
+                    instruction_add(CWDE, NULL, NULL, 0, 0);
+                } else if (strcmp(root->data, ">=") == 0) {
+                    instruction_add(CMP, STRDUP("%eax"), STRDUP("%ebx"), 0, 0);
+                    instruction_add(SETLE, STRDUP("%al"), NULL, 0, 0);
+                    instruction_add(CBW, NULL, NULL, 0, 0);
+                    instruction_add(CWDE, NULL, NULL, 0, 0);
                 } else if (strcmp(root->data, "F") == 0) {
                     //Funksjonskall
+                    //Push the parameters to the stack
+                    node_t* expression_list = root->children[1];
+                    int32_t count;
+                    if (expression_list != NULL) {
+                        for (int32_t i=0; i<expression_list->n_children; i++) {
+                            generate(stream, expression_list->children[i]);
+                        }
+                        count = expression_list->n_children*4;
+                    } else {
+                        count = 0;
+
+                    }
                     char* label = root->children[0]->entry->label;
                     instruction_add(CALL, STRDUP(label), NULL, 0, 0);
+
+                    int32_t size = count/10+1 + 2;
+                    char* s = malloc(size + 1);
+                    sprintf(s, "$%d", count);
+                    instruction_add(ADD, s, STRDUP("%esp"), 0, 0);
                 }
+                instruction_add(PUSH, STRDUP("%eax"), NULL, 0, 0);
+            } else if (strcmp(root->data, "-") == 0) {
+                instruction_add(POP, STRDUP("%eax"), NULL, 0, 0);
+                instruction_add(MOVE, STRDUP("$-1"), STRDUP("%ebx"), 0, 0);
+                instruction_add(MUL, STRDUP("%ebx"), NULL, 0, 0);
                 instruction_add(PUSH, STRDUP("%eax"), NULL, 0, 0);
             }
 
@@ -322,6 +373,12 @@ void generate ( FILE *stream, node_t *root ) {
             */
             RECUR();
             instruction_add(POP, STRDUP("%eax"), NULL, 0, 0);
+            //Maybe there is a nicer way to do this. We basically need to get out of
+            //all blocks we are in and the function and each of these have its own stack-frame
+            for (int32_t i = 0; i < depth; i++) {
+                instruction_add(LEAVE, NULL, NULL, 0, 0);
+            }
+            instruction_add(RET, NULL, NULL, 0, 0);
             break;
 
         default:
