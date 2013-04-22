@@ -1,0 +1,13 @@
+FUNC while_test ()
+{
+    VAR a
+    a := 20
+    WHILE ( a ) DO
+    {
+        a := a - 1
+        PRINT a
+    }
+    DONE
+    RETURN 0
+}
+

@@ -1,0 +1,10 @@
+FUNC simple_if (a, b)
+{
+    IF ( 4 > 4 ) THEN
+        PRINT "Sant"
+    ELSE
+        PRINT "Usant"
+    FI
+    RETURN 0
+}
+

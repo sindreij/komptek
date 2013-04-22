@@ -105,6 +105,23 @@ int32_t find_variable(node_t* variable) {
     return symbol->stack_offset;
 }
 
+int label_id = 0;
+
+char* get_next_label_id() {
+    int32_t size = label_id/10+1 + 3;
+    char* toprint = malloc(size + 1);
+    sprintf(toprint, ".L%d", label_id);
+    label_id++;
+    return toprint;
+}
+
+char* add_colon(char* s) {
+    char* new = (char*)malloc(strlen(s)+2);
+    strncpy(new, s, strlen(s)+2);
+    strncat(new, ":", strlen(s)+2);
+    return new;
+}
+
 void generate ( FILE *stream, node_t *root ) {
     int elegant_solution;
     if ( root == NULL )
@@ -198,6 +215,76 @@ void generate ( FILE *stream, node_t *root ) {
                 }
             }
 
+            break;
+        }
+
+        case IF_STATEMENT:{
+            node_t* expression = root->children[0];
+            node_t* statement = root->children[1];
+            node_t* else_statement = NULL;
+            char* else_label = NULL;
+            char* end_label = get_next_label_id();
+            if (root->n_children > 2) {
+                else_statement = root->children[2];
+                else_label = get_next_label_id();
+            }
+            generate(stream, expression);
+           
+            instruction_add(POP, STRDUP("%eax"), NULL, 0, 0);
+            instruction_add(CMP, STRDUP("$0"), STRDUP("%eax"), 0, 0);
+            if (else_statement != NULL) {
+                instruction_add(JUMPEQ, else_label, NULL, 0, 0);    
+            } else {
+                instruction_add(JUMPEQ, end_label, NULL, 0, 0);
+            }
+            generate(stream, statement);
+            if (else_statement != NULL) {
+                instruction_add(JUMP, end_label, NULL, 0, 0);    
+                instruction_add(STRING, add_colon(else_label), NULL, 0, 0);
+                generate(stream, else_statement);
+            }
+            instruction_add(STRING, add_colon(end_label), NULL, 0, 0);
+            break;
+        }
+
+        case FOR_STATEMENT:{
+            node_t* assignment = root->children[0];
+            node_t* expression = root->children[1];
+            node_t* statement = root->children[2];
+            generate(stream, assignment);
+
+            char* top_label = get_next_label_id();
+            char* end_label = get_next_label_id();
+
+            instruction_add(STRING, add_colon(top_label), NULL, 0, 0);
+            generate(stream, expression);
+            instruction_add(POP, STRDUP("%ebx"), NULL, 0, 0);
+            int32_t offset = find_variable(assignment->children[0]);
+            instruction_add(CMP, STRDUP("%ebx"), STRDUP("%eax"), 0, offset);
+            instruction_add(JUMPEQ, end_label, NULL, 0, 0);
+
+            generate(stream, statement);
+            offset = find_variable(assignment->children[0]);
+            instruction_add(ADD, STRDUP("$1"), eax, 0, offset);
+            instruction_add(JUMP, top_label, NULL, 0, 0);   
+            instruction_add(STRING, add_colon(end_label), NULL, 0, 0);
+            break;
+        }
+
+        case WHILE_STATEMENT:{
+            node_t* expression = root->children[0];
+            node_t* statement = root->children[1];
+            char* top_label = get_next_label_id();
+            char* end_label = get_next_label_id();
+            instruction_add(STRING, add_colon(top_label), NULL, 0, 0);
+            generate(stream, expression);
+            instruction_add(POP, STRDUP("%eax"), NULL, 0, 0);
+            instruction_add(CMP, STRDUP("$0"), STRDUP("%eax"), 0, 0);
+            instruction_add(JUMPEQ, end_label, NULL, 0, 0);
+
+            generate(stream, statement);
+            instruction_add(JUMP, top_label, NULL, 0, 0);   
+            instruction_add(STRING, add_colon(end_label), NULL, 0, 0);
             break;
         }
 

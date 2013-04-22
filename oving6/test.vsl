@@ -1,0 +1,10 @@
+FUNC test() 
+{
+    VAR x, y, a, b
+    x := 2
+    y := 5
+    a := x < y
+    b := y < x
+    PRINT a, b
+    RETURN 0
+}

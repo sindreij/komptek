@@ -1,0 +1,11 @@
+FUNC for(){
+        VAR a, b, i
+        a := 0
+        b := 20
+
+        FOR i := a TO b DO
+        {
+            PRINT i
+        }
+        DONE
+}
